@@ -5,12 +5,13 @@
 #include "bseq.h"
 #include "minimap.h"
 #include "index.h"
+#include "gfa.h"
 
 int main(int argc, char *argv[])
 {
 
     if (argc < 5) {
-        printf("usage: ./segram <k> <w> <fasta> <fastq>\n");
+        printf("usage: ./segram <k> <w> <fasta> <gfa>\n");
         return -1;
     }
 
@@ -24,7 +25,7 @@ int main(int argc, char *argv[])
     ipt.k = atoi(argv[1]);
     ipt.w = atoi(argv[2]);
     char *fasta = argv[3];
-    char *fastq = argv[4];
+    char *gfa = argv[4];
 	
     ipt.flag = 0, ipt.k = 21, ipt.w = 11;
     opt.flag |= MM_F_SR | MM_F_FRAG_MODE | MM_F_NO_PRINT_2ND | MM_F_2_IO_THREADS | MM_F_HEAP_SORT;
@@ -50,13 +51,6 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "[ERROR] failed to open file '%s': %s\n", fasta, strerror(errno));
 		return 1;
 	}
-	if (fastq == NULL) {
-		fprintf(stderr, "[ERROR] missing input: please specify a query file to map or option -d to keep the index\n");
-		mm_idx_reader_close(idx_rdr);
-		return 1;
-	}
-	if (opt.best_n == 0 && (opt.flag&MM_F_CIGAR))
-		fprintf(stderr, "[WARNING]\033[1;31m `-N 0' reduces alignment accuracy. Please use --secondary=no to suppress secondary alignments.\033[0m\n");
 	while ((mi = mm_idx_reader_read(idx_rdr, n_threads)) != 0) {
 		if ((opt.flag & MM_F_CIGAR) && (mi->flag & MM_I_NO_SEQ)) {
 			fprintf(stderr, "[ERROR] the prebuilt index doesn't contain sequences.\n");
@@ -68,6 +62,9 @@ int main(int argc, char *argv[])
 				__func__, mi->n_seq);
 		mm_mapopt_update(&opt, mi);
 		mm_idx_stat(mi);
+
+		// read fastq and align to mi
+		
 		mm_idx_destroy(mi);
 	}
 	mm_idx_reader_close(idx_rdr);
@@ -81,6 +78,15 @@ int main(int argc, char *argv[])
 	fprintf(stderr, "[M::%s] CMD:", __func__);
 	for (i = 0; i < argc; ++i)
 		fprintf(stderr, " %s", argv[i]);
+
+	printf("\n");
+	graph_t *g = gfa_read(gfa);
+
+	if (!g) {
+		if (!g->nodes) free(g->nodes);
+		if (!g->char_table.data) free(g->char_table.data);
+		if (!g->edge_table.edges) free(g->edge_table.edges);
+	}
 
 	return 0;
 }

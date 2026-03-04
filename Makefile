@@ -30,3 +30,7 @@ clean:
 	rm -f $(TARGET)
 
 install: clean $(TARGET)
+
+# vg construct -r human_v38.chr22.fasta -v hprc-v1.0-pggb.grch38.1-22+X.chr22.vcf > hg38.hprc.chr22.vg
+# vg ids -s hg38.hprc.chr22.vg > hg38.hprc.chr22.sorted.vg
+# vg view -g hg38.hprc.chr22.sorted.vg | vg mod -O - > hg38.hprc.chr22.sorted.gfa
