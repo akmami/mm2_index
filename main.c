@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include "bseq.h"
 #include "minimap.h"
 #include "index.h"
 #include "gfa.h"

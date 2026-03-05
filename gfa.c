@@ -1,8 +1,12 @@
 #include "gfa.h"
 
 
+#include "khashl.h"
 KHASHL_MAP_INIT(KH_LOCAL, segment_idx_t, map64, uint64_t, char *, kh_hash_uint64, kh_eq_generic)
-KSEQ_INIT(gzFile, gzread)
+
+#include "kseq.h"
+KSTREAM_INIT2(static, gzFile, gzread, 16384)
+
 
 typedef struct {
     uint64_t incoming;
@@ -60,8 +64,6 @@ graph_t *gfa_read(const char *fn)
             kh_val(segments, k) = seq;
 
             if (id > max_id) max_id = id;
-
-            kv_push(gfa_link, NULL, links, l);
         }
 		else if (s.s[0] == 'L') {
             uint64_t id1, id2;
@@ -125,6 +127,8 @@ graph_t *gfa_read(const char *fn)
         if (kh_exist(segments, k))
             free(kh_val(segments, k));
 
+    ks_destroy(ks);
+    
     map64_destroy(segments);
     kv_destroy(links);
 

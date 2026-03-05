@@ -7,8 +7,6 @@
 #include <zlib.h>
 #include "minimap.h"
 #include "sketch.h"
-#include "kseq.h"
-#include "khashl.h"
 
 // Node table entry
 typedef struct {

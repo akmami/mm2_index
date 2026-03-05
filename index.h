@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <string.h>
+#include <zlib.h>
 #define __STDC_LIMIT_MACROS
 #include "kthread.h"
 #include "bseq.h"
@@ -66,10 +68,6 @@ mm_idx_t *mm_idx_gen(mm_bseq_file_t *fp, int w, int k, int b, int flag, int mini
 /******************
  * Generate index *
  ******************/
-
-#include <string.h>
-#include <zlib.h>
-#include "bseq.h"
 
 typedef struct {
 	int mini_batch_size;
