@@ -71,6 +71,8 @@ static inline int tq_shift(tiny_queue_t *q)
  */
 void mm_sketch(void *km, const char *str, int len, int w, int k, uint32_t rid, int is_hpc, mm128_v *p)
 {
+	if (len < 1) return;
+	
 	uint64_t shift1 = 2 * (k - 1), mask = (1ULL<<2*k) - 1, kmer[2] = {0,0};
 	int i, j, l, buf_pos, min_pos, kmer_span = 0;
 	mm128_t buf[256], min = { UINT64_MAX, UINT64_MAX };

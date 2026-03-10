@@ -250,7 +250,7 @@ mm_idx_t *mm_idx_reader_read(mm_idx_reader_t *r, int n_threads)
 			fprintf(stderr, "[WARNING]\033[1;31m Indexing parameters (-k, -w or -H) overridden by parameters used in the prebuilt index.\033[0m\n");
 	}
 	else
-		mi = mm_idx_gen(r->fp.seq, r->opt.w, r->opt.k, r->opt.bucket_bits, r->opt.flag, r->opt.mini_batch_size, n_threads, r->opt.batch_size);
+		mi = mm_idx_gen_fa(r->fp.seq, r->opt.w, r->opt.k, r->opt.bucket_bits, r->opt.flag, r->opt.mini_batch_size, n_threads, r->opt.batch_size);
 	if (mi)
 	{
 		if (r->fp_out)
@@ -407,7 +407,7 @@ void mm_idxopt_init(mm_idxopt_t *opt)
 	opt->batch_size = 8000000000ULL;
 }
 
-mm_idx_t *mm_idx_gen(mm_bseq_file_t *fp, int w, int k, int b, int flag, int mini_batch_size, int n_threads, uint64_t batch_size)
+mm_idx_t *mm_idx_gen_fa(mm_bseq_file_t *fp, int w, int k, int b, int flag, int mini_batch_size, int n_threads, uint64_t batch_size)
 {
 	pipeline_t pl;
 	if (fp == 0 || mm_bseq_eof(fp))
@@ -566,3 +566,48 @@ mm_idx_t *mm_idx_init(int w, int k, int b, int flag)
 // -----------------------------------------------
 // -----------------------------------------------
 // -----------------------------------------------
+
+mm_idx_t *mm_idx_gfa(graph_t *g, mm_idx_reader_t *r)
+{
+	mm_idx_t *mi;
+	mi = mm_idx_gen_gfa(g, r->opt.w, r->opt.k, r->opt.bucket_bits, r->opt.flag, r->opt.mini_batch_size, r->opt.batch_size);
+	return mi;
+}
+
+mm_idx_reader_t *mm_idx_gfa_init(const mm_idxopt_t *opt)
+{
+	mm_idx_reader_t *r;
+	r = (mm_idx_reader_t *)calloc(1, sizeof(mm_idx_reader_t));
+	if (opt)
+		r->opt = *opt;
+	else
+		mm_idxopt_init(&r->opt);
+	return r;
+}
+
+mm_idx_t *mm_idx_gen_gfa(graph_t *g, int w, int k, int b, int flag, int mini_batch_size, uint64_t batch_size)
+{
+	mm_idx_t *mi = mm_idx_init(w, k, b, flag);
+	mm128_v a;
+	int i;
+	a.n = a.m = 0;
+	a.a = NULL;
+
+	// step 1: compute sketch
+	for (i = 0; i <  g->n_nodes; ++i)
+	{
+		mm_sketch(0, g->char_table.data + g->nodes[i].char_offset, g->nodes[i].seq_len, w, k, i, flag & MM_I_HPC, &a);
+	}
+
+	fprintf(stderr, "[M::%s] collected minimizers\n", __func__);
+	
+	// dispatch sketch to buckets
+	mm_idx_add(mi, a.n, a.a);
+	kfree(0, a.a);
+	
+	// post processing
+	mm_idx_post(mi, 1);
+	fprintf(stderr, "[M::%s] sorted minimizers\n", __func__);
+
+	return mi;
+}

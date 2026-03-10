@@ -1,15 +1,15 @@
 #include "gfa.h"
 
 #include "khashl.h"
-KHASHL_MAP_INIT(KH_LOCAL, segment_idx_t, map64, uint64_t, char *, kh_hash_uint64, kh_eq_generic)
+KHASHL_MAP_INIT(KH_LOCAL, segment_idx_t, map64, uint32_t, char *, kh_hash_uint64, kh_eq_generic)
 
 #include "kseq.h"
 KSTREAM_INIT2(static, gzFile, gzread, 16384)
 
 typedef struct
 {
-    uint64_t incoming;
-    uint64_t outgoing;
+    uint32_t incoming;
+    uint32_t outgoing;
 } gfa_link;
 
 int cmp_link(const void *a, const void *b)
@@ -55,10 +55,10 @@ graph_t *gfa_read(const char *fn)
             char *token = strtok_r(s.s, "\t", &saveptr); // S
 
             token = strtok_r(NULL, "\t", &saveptr); // ID
-            uint64_t id = strtoull(token, NULL, 10);
+            uint32_t id = strtoul(token, NULL, 10);
 
             token = strtok_r(NULL, "\t", &saveptr); // SEQ
-            size_t len = strlen(token);
+            uint32_t len = strlen(token);
             char *seq = (char *)malloc(len + 1);
             memcpy(seq, token, len + 1);
 
@@ -74,10 +74,10 @@ graph_t *gfa_read(const char *fn)
         }
         else if (s.s[0] == 'L')
         {
-            uint64_t id1, id2;
+            uint32_t id1, id2;
             char strand1, strand2;
             size_t overlap = 0;
-            sscanf(s.s, "L\t%lu\t%c\t%lu\t%c\t%luM", &id1, &strand1, &id2, &strand2, &overlap);
+            sscanf(s.s, "L\t%u\t%c\t%u\t%c\t%luM", &id1, &strand1, &id2, &strand2, &overlap);
             gfa_link l = (gfa_link){id1, id2};
             kv_push(gfa_link, NULL, links, l);
         }
@@ -99,9 +99,9 @@ graph_t *gfa_read(const char *fn)
 
     // char table
     g->char_table.length = char_total;
-    g->char_table.data = (uint8_t *)malloc(char_total);
-    uint64_t char_offset = 0;
-    uint64_t edge_offset = 0;
+    g->char_table.data = (char_data *)malloc(char_total);
+    uint32_t char_offset = 0;
+    uint32_t edge_offset = 0;
 
     for (uint32_t i = 1; i <= max_id; i++)
     {
@@ -132,7 +132,7 @@ graph_t *gfa_read(const char *fn)
         }
     }
 
-    printf("line: %lu\n", lineno);
+    fprintf(stderr, "[M::%s] gfa: S - %u, L - %u\n", __func__, g->n_nodes, g->edge_table.n_edges);
 
     for (khint_t k = 0; k < kh_end(segments); ++k)
         if (kh_exist(segments, k))

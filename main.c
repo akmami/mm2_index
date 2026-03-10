@@ -20,10 +20,8 @@ int main(int argc, char *argv[])
 	int i, n_threads = 3;
 	char *fnw = 0;
 	mm_idx_reader_t *idx_rdr;
-	mm_idx_t *mi;
+	mm_idx_t *mi_fa;
 
-	ipt.k = atoi(argv[1]);
-	ipt.w = atoi(argv[2]);
 	char *fasta = argv[3];
 	char *gfa = argv[4];
 
@@ -47,6 +45,9 @@ int main(int argc, char *argv[])
 	opt.max_occ = 5000;
 	opt.mini_batch_size = 50000000;
 
+	ipt.k = atoi(argv[1]);
+	ipt.w = atoi(argv[2]);
+
 	idx_rdr = mm_idx_reader_open(fasta, &ipt, fnw);
 
 	if (idx_rdr == 0)
@@ -54,23 +55,23 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "[ERROR] failed to open file '%s': %s\n", fasta, strerror(errno));
 		return 1;
 	}
-	while ((mi = mm_idx_reader_read(idx_rdr, n_threads)) != 0)
+	while ((mi_fa = mm_idx_reader_read(idx_rdr, n_threads)) != 0)
 	{
-		if ((opt.flag & MM_F_CIGAR) && (mi->flag & MM_I_NO_SEQ))
+		if ((opt.flag & MM_F_CIGAR) && (mi_fa->flag & MM_I_NO_SEQ))
 		{
 			fprintf(stderr, "[ERROR] the prebuilt index doesn't contain sequences.\n");
-			mm_idx_destroy(mi);
+			mm_idx_destroy(mi_fa);
 			mm_idx_reader_close(idx_rdr);
 			return 1;
 		}
 		fprintf(stderr, "[M::%s] loaded/built the index for %d target sequence(s)\n",
-				__func__, mi->n_seq);
-		mm_mapopt_update(&opt, mi);
-		mm_idx_stat(mi);
+				__func__, mi_fa->n_seq);
+		mm_mapopt_update(&opt, mi_fa);
+		mm_idx_stat(mi_fa);
 
 		// read fastq and align to mi
 
-		mm_idx_destroy(mi);
+		mm_idx_destroy(mi_fa);
 	}
 	mm_idx_reader_close(idx_rdr);
 
@@ -80,16 +81,24 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
+	// process GFA
+	fprintf(stderr, "[M::%s] sketching gfa\n", __func__);
+	graph_t *g = gfa_read(gfa);
+
+	mm_idx_reader_t *idx_gfa_rdr = mm_idx_gfa_init(&ipt); 
+	mm_idx_t *mi_gfa = mm_idx_gfa(g, idx_gfa_rdr);
+
+	mm_idx_stat(mi_gfa);
+	mm_idx_destroy(mi_gfa);
+	free(idx_gfa_rdr);
+
+	free_graph(g);
+
 	fprintf(stderr, "[M::%s] Version: %s\n", __func__, MM_VERSION);
 	fprintf(stderr, "[M::%s] CMD:", __func__);
 	for (i = 0; i < argc; ++i)
 		fprintf(stderr, " %s", argv[i]);
 	printf("\n");
-
-	// process GFA
-	graph_t *g = gfa_read(gfa);
-
-	free_graph(g);
 
 	return 0;
 }

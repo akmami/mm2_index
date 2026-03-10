@@ -8,6 +8,9 @@
 #include "minimap.h"
 #include "sketch.h"
 
+
+#define char_data char
+
 // Node table entry
 typedef struct
 {
@@ -20,7 +23,7 @@ typedef struct
 // Character table
 typedef struct
 {
-    uint8_t *data; // 2-bit packed bases
+    char_data *data; // 2-bit packed bases
     uint64_t length;
 } char_table_t;
 
@@ -28,7 +31,7 @@ typedef struct
 typedef struct
 {
     uint32_t *edges;
-    uint64_t n_edges;
+    uint32_t n_edges;
 } edge_table_t;
 
 // Full graph container

@@ -14,6 +14,7 @@
 #include "sketch.h"
 #include "kvec.h"
 #include "khash.h"
+#include "gfa.h"
 
 #define idx_hash(a) ((a) >> 1)
 #define idx_eq(a, b) ((a) >> 1 == (b) >> 1)
@@ -65,7 +66,13 @@ int64_t mm_idx_is_idx(const char *fn);
 
 void mm_idxopt_init(mm_idxopt_t *opt);
 
-mm_idx_t *mm_idx_gen(mm_bseq_file_t *fp, int w, int k, int b, int flag, int mini_batch_size, int n_threads, uint64_t batch_size);
+mm_idx_t *mm_idx_gen_fa(mm_bseq_file_t *fp, int w, int k, int b, int flag, int mini_batch_size, int n_threads, uint64_t batch_size);
+
+mm_idx_reader_t *mm_idx_gfa_init(const mm_idxopt_t *opt);
+
+mm_idx_t *mm_idx_gfa(graph_t *g, mm_idx_reader_t *r);
+
+mm_idx_t *mm_idx_gen_gfa(graph_t *g, int w, int k, int b, int flag, int mini_batch_size, uint64_t batch_size);
 
 /******************
  * Generate index *
