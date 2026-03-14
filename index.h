@@ -101,4 +101,8 @@ void mm_idx_dump(FILE *fp, const mm_idx_t *mi);
 
 mm_idx_t *mm_idx_init(int w, int k, int b, int flag);
 
+const char *mm_idx_get_node(graph_t *g, uint64_t id, int *size);
+
+const uint32_t *mm_idx_get_edge(graph_t *g, uint64_t id, int *size);
+
 #endif

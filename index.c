@@ -632,3 +632,15 @@ mm_idx_t *mm_idx_gen_gfa(graph_t *g, int w, int k, int b, int flag, int mini_bat
 
 	return mi;
 }
+
+const char *mm_idx_get_node(graph_t *g, uint64_t id, int *size)
+{
+	*size = g->nodes[id].seq_len;
+	return g->char_table.data + g->nodes[id].char_offset;
+}
+
+const uint32_t *mm_idx_get_edge(graph_t *g, uint64_t id, int *size)
+{
+	*size = g->nodes[id].edge_count;
+	return g->edge_table.edges + g->nodes[id].edge_offset;
+}

@@ -77,15 +77,22 @@ int main(int argc, char *argv[])
 		mm_sketch(0, seq, seq_len, mi_fa->w, mi_fa->k, 0, mi_fa->flag & MM_I_HPC, &a);
 
 		for (int i = 0; i < a.n; i++) {
+			int valid = 0;
 			int count = 0;
 			const uint64_t *seeds = mm_idx_get(mi_fa, get_hash(a.a[i]), &count); // do not free this as it returns bucket from index table
 
 			printf("minimizers found for hash=%lu, len=%lu, start=%lu, end=%lu, strand=%lu:\n", get_hash(a.a[i]), get_span(a.a[i]), get_index(a.a[i]), get_end(a.a[i]), get_strand(a.a[i]));
 			for (int j = 0; j < count; j++) {
-				printf("rid=%lu, start=%lu, end=%lu, strand=%lu\n", get_seed_rid(seeds[j]), get_seed_index(seeds[j], get_end(a.a[i])), get_seed_end(seeds[j]), get_seed_strand(seeds[j]));
+				printf("ref=%lu, start=%lu, end=%lu, strand=%lu\n", get_seed_rid(seeds[j]), get_seed_index(seeds[j], get_end(a.a[i])), get_seed_end(seeds[j]), get_seed_strand(seeds[j]));
+				valid = 1;
 			}
 			printf("\n");
+			if (valid) break; // only print one minimizer that hits the graph
 		}
+
+		// cleanup read's minimizers
+		free(a.a);
+		a.n = a.m = 0;
 
 		// destroy index
 		mm_idx_destroy(mi_fa);
@@ -106,6 +113,36 @@ int main(int argc, char *argv[])
 	mm_idx_t *mi_gfa = mm_idx_gfa(g, idx_gfa_rdr);
 
 	mm_idx_stat(mi_gfa);
+
+	// lets query same read from gfa index
+	char *seq = "CGATCCCACAGAAATACAAACTACCATCAGAGAATACTACAAACACCTCTACGCAAATAAACTAGAAAATCTAGAAGAAATGGATAAATTCCTGGACACACACCCTCCCAAGACTAAACCAGGAAGAAGTTGAATCTCTGAATAGACCAATAACAGGAGCTGAAATTGTGGCGATAATCAATAGTTTACCAACCAAAAAGAGTCCAGGACCAGATGGATTCACAGCCGAATTCTATCAGAGGTAAAAGG";
+	int seq_len = 250;
+	mm128_v a;
+	a.m = a.n = 0;
+	mm_sketch(0, seq, seq_len, mi_gfa->w, mi_gfa->k, 0, mi_gfa->flag & MM_I_HPC, &a);
+
+	for (int i = 0; i < a.n; i++) {
+		int valid = 0;
+		int count = 0;
+		const uint64_t *seeds = mm_idx_get(mi_gfa, get_hash(a.a[i]), &count); // do not free this as it returns bucket from index table
+
+		printf("minimizers found for hash=%lu, len=%lu, start=%lu, end=%lu, strand=%lu:\n", get_hash(a.a[i]), get_span(a.a[i]), get_index(a.a[i]), get_end(a.a[i]), get_strand(a.a[i]));
+		for (int j = 0; j < count; j++) {
+			printf("node_id=%lu, start=%lu, end=%lu, strand=%lu\n", get_seed_rid(seeds[j]), get_seed_index(seeds[j], get_end(a.a[i])), get_seed_end(seeds[j]), get_seed_strand(seeds[j]));
+			valid = 1;
+		}
+		printf("\n");
+
+		if (valid) break; // only print one minimizer that hits the graph
+	}
+
+	// cleanup read's minimizers
+	// free(a.a); // this part gives error I don't know. maybe line 94 ??
+	a.n = a.m = 0;
+
+	// destroy index
+	mm_idx_destroy(mi_fa);
+
 	mm_idx_destroy(mi_gfa);
 	free(idx_gfa_rdr);
 
