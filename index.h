@@ -68,6 +68,8 @@ void mm_idxopt_init(mm_idxopt_t *opt);
 
 mm_idx_t *mm_idx_gen_fa(mm_bseq_file_t *fp, int w, int k, int b, int flag, int mini_batch_size, int n_threads, uint64_t batch_size);
 
+const uint64_t *mm_idx_get(const mm_idx_t *mi, uint64_t minier, int *n);
+
 mm_idx_reader_t *mm_idx_gfa_init(const mm_idxopt_t *opt);
 
 mm_idx_t *mm_idx_gfa(graph_t *g, mm_idx_reader_t *r);

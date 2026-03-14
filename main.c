@@ -70,7 +70,24 @@ int main(int argc, char *argv[])
 		mm_idx_stat(mi_fa);
 
 		// read fastq and align to mi
+		char *seq = "CGATCCCACAGAAATACAAACTACCATCAGAGAATACTACAAACACCTCTACGCAAATAAACTAGAAAATCTAGAAGAAATGGATAAATTCCTGGACACACACCCTCCCAAGACTAAACCAGGAAGAAGTTGAATCTCTGAATAGACCAATAACAGGAGCTGAAATTGTGGCGATAATCAATAGTTTACCAACCAAAAAGAGTCCAGGACCAGATGGATTCACAGCCGAATTCTATCAGAGGTAAAAGG";
+		int seq_len = 250;
+		mm128_v a;
+		a.m = a.n = 0;
+		mm_sketch(0, seq, seq_len, mi_fa->w, mi_fa->k, 0, mi_fa->flag & MM_I_HPC, &a);
 
+		for (int i = 0; i < a.n; i++) {
+			int count = 0;
+			const uint64_t *seeds = mm_idx_get(mi_fa, get_hash(a.a[i]), &count); // do not free this as it returns bucket from index table
+
+			printf("minimizers found for hash=%lu, len=%lu, start=%lu, end=%lu, strand=%lu:\n", get_hash(a.a[i]), get_span(a.a[i]), get_index(a.a[i]), get_end(a.a[i]), get_strand(a.a[i]));
+			for (int j = 0; j < count; j++) {
+				printf("rid=%lu, start=%lu, end=%lu, strand=%lu\n", get_seed_rid(seeds[j]), get_seed_index(seeds[j], get_end(a.a[i])), get_seed_end(seeds[j]), get_seed_strand(seeds[j]));
+			}
+			printf("\n");
+		}
+
+		// destroy index
 		mm_idx_destroy(mi_fa);
 	}
 	mm_idx_reader_close(idx_rdr);

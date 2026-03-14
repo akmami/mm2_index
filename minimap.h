@@ -211,6 +211,19 @@ struct mm_tbuf_s {
 
 typedef struct mm_tbuf_s mm_tbuf_t;
 
+// seeds
+#define get_hash(minimizer) ((minimizer).x >> 8)
+#define get_span(minimizer) ((minimizer).x & 0xFF)
+#define get_rid(minimizer) ((minimizer).y >> 32)
+#define get_index(minimizer) ((((minimizer).y & 0xFFFFFFFF) >> 1) - get_span(minimizer) + 1)
+#define get_end(minimizer) (((minimizer).y & 0xFFFFFFFF) >> 1)
+#define get_strand(minimizer) ((minimizer).y & 1)
+
+#define get_seed_rid(minimizer) ((minimizer) >> 32)
+#define get_seed_index(minimizer, span) ((((minimizer) & 0xFFFFFFFF) >> 1) - span + 1)
+#define get_seed_end(minimizer) (((minimizer) & 0xFFFFFFFF) >> 1)
+#define get_seed_strand(minimizer) ((minimizer) & 1)
+
 #ifdef __cplusplus
 }
 #endif

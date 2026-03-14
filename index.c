@@ -427,6 +427,27 @@ mm_idx_t *mm_idx_gen_fa(mm_bseq_file_t *fp, int w, int k, int b, int flag, int m
 	return pl.mi;
 }
 
+// for seeds
+const uint64_t *mm_idx_get(const mm_idx_t *mi, uint64_t minier, int *n)
+{
+	int mask = (1<<mi->b) - 1;
+	khint_t k;
+	mm_idx_bucket_t *b = &mi->B[minier&mask];
+	idxhash_t *h = (idxhash_t*)b->h;
+	*n = 0;
+	if (h == 0) return 0;
+	k = kh_get(idx, h, minier>>mi->b<<1);
+	if (k == kh_end(h)) return 0;
+	if (kh_key(h, k)&1) { // special casing when there is only one k-mer
+		*n = 1;
+		return &kh_val(h, k);
+	} else {
+		*n = (uint32_t)kh_val(h, k);
+		return &b->p[kh_val(h, k)>>32];
+	}
+}
+
+
 mm_idx_t *mm_idx_load(FILE *fp)
 {
 	char magic[4];
